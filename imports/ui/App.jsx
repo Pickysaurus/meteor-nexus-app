@@ -7,24 +7,31 @@ import { userAccounts } from '../api/userAccounts.js';
 
 import Info from './Info.jsx';
 import NexusModsAccount from './NexusModsAccount.jsx';
-import Nexus from 'nexus-api';
 import Selectors from './Selectors.jsx';
-
-/* Testing stuff */
-import request from 'request';
+import BodySignIn from './BodySignIn.jsx';
+import GameSelector from './GameSelector.jsx';
+import ModSelector from './ModSelector.jsx';
+import FileSelector from './FileSelector.jsx';
 
 class App extends Component {
   constructor(props) {
     super(props);
-    const savedUser = sessionStorage.getItem("user") ? JSON.parse(sessionStorage.getItem("user")) : null;
+    const savedKey = sessionStorage.getItem("key");
+    savedKey ? Meteor.call('validateAPIkey', (savedKey), (error, result) => {
+      if (error) console.error;
+      this.setState({
+        nexusModsUser: !error ? result : null,
+        ready: true,        
+      });
+    }) : null;
     // const api = savedUser ? Nexus.create(savedUser.key,'Mod Data', '1.0.0', '100').catch(console.error) : null;
 
     this.state = {
-      nexusModsUser: savedUser,
-      api: null,
+      nexusModsUser: null,
       activeGame: null,
       activeMod: null,
       activeFile: null,
+      ready: false,
     }
   }
 
@@ -32,61 +39,70 @@ class App extends Component {
     // Start the SSO login process and update the state if we log in successfully.
     if (this.state.nexusModsUser) {
       // Log out if we're logged in.
-      this.setState({nexusModsUser: null});
-      sessionStorage.removeItem('user');      
+      this.setState({nexusModsUser: null, ready: false});
+      sessionStorage.removeItem('key');      
     } else {
       // Start the login process.
       const loginInfo = await nexusSSOLogin().catch(console.error);
       if (!loginInfo) alert('Login to Nexus Mods failed.');
-      const api = await Nexus.create(loginInfo.key, 'Mod Data', '1.0.0', 'skyrim').catch(console.error);
-      sessionStorage.setItem("user",JSON.stringify(loginInfo));
-      this.setState({nexusModsUser: loginInfo, api});
+      await Meteor.call('validateAPIkey', (loginInfo.key), (error, result) => {
+        if (error) alert(error);
+        this.setState({nexusModsUser: result, ready: true});
+        sessionStorage.setItem("key",result.key);
+      });
     }
   }
 
   updateGame(newGame) {
+    console.log('Setting game:', newGame);
     this.setState({activeGame: newGame});
   }
 
-  async testRequest(apiKey) {
-    const response = await validateTest(apiKey);
-    alert(response);
-  }
-
   render() {
+    const { activeFile, activeGame, activeMod, ready, nexusModsUser} = this.state;
+
     return (
       <div>
-        <h1>NXM Web App</h1>
+        <h1>Mod Compatibility Database</h1>
         <NexusModsAccount
           loginButton = {this.loginToNexusMods.bind(this)}
-          nexusModsUser = {this.state.nexusModsUser}
+          nexusModsUser = {nexusModsUser}
         />
         <div className="main-content">
           <Info />
-          <Selectors
-            api={this.state.api}
-            nexusModsUser={this.state.nexusModsUser}
-            activeGame={this.state.activeGame}
-            activeMod={this.state.activeMod}
-            activeFile={this.state.activeFile}
-          />
-          <button onClick={() => this.testRequest(this.state.nexusModsUser.key)}>Test</button>
+          {!this.state.ready ? <BodySignIn onClick={this.loginToNexusMods.bind(this)} />:
+          <div className="selector-container">
+            <GameSelector
+              nexusModsUser={nexusModsUser}
+              activeGame={activeGame}
+              ready={ready}
+              updateGame={this.updateGame.bind(this)}
+            />
+            <ModSelector
+              nexusModsUser={nexusModsUser}
+              activeGame={activeGame}
+              activeMod={activeMod}
+            />
+            <FileSelector 
+              nexusModsUser={nexusModsUser}
+              activeGame={activeGame}
+              activeMod={activeMod}
+              activeFile={activeFile}
+            />
+          </div>}
+          <br/>
+          {this.state.ready ? <Selectors
+              ready={this.state.ready}
+              nexusModsUser={this.state.ready ? this.state.nexusModsUser : null}
+              activeGame={this.state.activeGame}
+              activeMod={this.state.activeMod}
+              activeFile={this.state.activeFile}
+              updateGame={this.updateGame.bind(this)}
+            /> : ''}
         </div>
       </div>
     );
   }
-}
-
-async function validateTest(apiKey) {
-  const requestHeader = {
-    "Application-Name": "Nexus Mods Discord Bot",
-    "Application-Version": 2.0,
-    "apikey": apiKey,
-    "Access-Control-Allow-Headers": "Accept"
-  };
-request('https://api.nexusmods.com/v1/users/validate', {headers: requestHeader}, (response) => {
-  return console.log("apireply", response)
-});
 }
 
 

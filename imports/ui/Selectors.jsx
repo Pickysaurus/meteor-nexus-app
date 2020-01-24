@@ -1,26 +1,29 @@
 import React, { Component } from "react";
+import ReactDOM from 'react-dom';
 import { Col, Form } from 'react-bootstrap';
-
-const exampleGames = [
-    { id: 110, title: 'Skyrim'},
-    { id: 1704, title: 'Skyrim Special Edition'}
-];
+import { Meteor } from 'meteor/meteor';
 
 class Selectors extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            gameList: [],
+        }
+    }
+
 
     render() {
-        const gameList = undefined //this.props.api ? this.props.api.getGames() : undefined;
-        //console.log(gameList);
+        this.getAllGames();
 
         return (
             <Form className="selectors">
                 <Form.Row>
                     <Form.Group as={Col} controlId="game">
                         <Form.Label>Game</Form.Label>
-                        <Form.Control as="select" disabled={!this.props.nexusModsUser}>
-                            <option>{this.props.nexusModsUser ? 'Select a game...' : 'Log in to get started'}</option>
-                            {this.props.nexusModsUser && gameList && gameList.length ? this.renderGames(gameList) : ''}
-                        </Form.Control>
+                            <Form.Control as="select" disabled={!this.props.ready} onChange={this.selectGame.bind(this)}>
+                                <option>Select a game...</option>
+                                {this.props.ready && this.props.nexusModsUser && this.state.gameList.length ? this.renderGames() : ''}
+                            </Form.Control>
                     </Form.Group>
                     <br />
                     <Form.Group as={Col} controlId="mod">
@@ -39,12 +42,30 @@ class Selectors extends Component {
         );
     }
 
-    renderGames(gameList) {
-        return gameList.map((game) => {
-            return (
-                <option key={game.id}>{game.title}</option>
-            );
-        })
+    selectGame(event) {
+        event.preventDefault();
+        const field = ReactDOM.findDOMNode(this.refs[event.target.value]);
+        const game = this.state.gameList.find((game) => game.id === parseInt(field.id));
+        this.props.updateGame(game);
+    }
+
+    async getAllGames() {
+        if (this.state.gameList.length) return this.state.gameList;
+        const {nexusModsUser} = this.props;
+        if (!nexusModsUser) return [];
+
+        Meteor.call('getGames', (nexusModsUser.key), (err, result) => {
+            if (err) return console.log('renderGames error', err);
+            this.setState({gameList: result.sort((a,b) => a.downloads < b.downloads ? 1 : -1)});
+        });
+    }
+
+    renderGames() {
+        const {gameList} = this.state;
+        if (gameList.length) {
+            return gameList.map((game) => { return (<option ref={game.name} id={game.id} key={game.id}>{game.name}</option>) });
+        }
+        return '';
     }
 }
 

@@ -7,7 +7,7 @@ export default class NexusModsAccount extends Component {
         <div className="account-banner">
         <div className="account-area">
             <div className="profile-image" style={{backgroundImage: this.props.nexusModsUser ? `url(${this.props.nexusModsUser.profile_url})` : ''}}/>
-            {this.props.nexusModsUser ? this.props.nexusModsUser.name : ''}
+            {this.props.nexusModsUser ? this.props.nexusModsUser.name : 'Not logged in'}
             <button
                 className="btn btn-login"
                 onClick={this.props.loginButton}     
