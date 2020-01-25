@@ -29,7 +29,7 @@ class FileSelector extends Component {
         return(
             <div className="selector" style={{backgroundImage: activeFile ? `url(${activeMod.picture_url})` : ''}}>
                 <div className="selector-overlay"><b>📂 File:</b> {activeFile ? activeFile.file_id : ''}<br/>
-                {activeFile ? activeFile.name : activeMod ? <Select className="selector-dropdown" labelField="name" valueField="file_id" options={this.prepareFiles(activeMod.files)} onChange={(values) => updateFile(values[0])} /> : <i>Select a mod</i>} <br/>
+                {activeFile ? <span className="selector-title">{activeFile.name}</span> : activeMod ? <Select className="selector-dropdown" labelField="name" valueField="file_id" options={this.prepareFiles(activeMod.files)} onChange={(values) => updateFile(values[0])} /> : <i>Select a mod</i>} <br/>
                 {activeFile ? <button className="btn" onClick={() => updateFile()}>Change</button> : ''}</div>
             </div>
         );

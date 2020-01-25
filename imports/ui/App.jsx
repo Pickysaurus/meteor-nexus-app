@@ -45,8 +45,11 @@ class App extends Component {
     // Start the SSO login process and update the state if we log in successfully.
     if (this.state.nexusModsUser) {
       // Log out if we're logged in.
-      this.setState({nexusModsUser: null, ready: false});
-      sessionStorage.removeItem('key');      
+      this.setState({nexusModsUser: null, ready: false, activeGame: null, activeMod: null, activeFile: null});
+      sessionStorage.removeItem('key');
+      sessionStorage.removeItem('game');
+      sessionStorage.removeItem('mod');
+      sessionStorage.removeItem('file');      
     } else {
       // Start the login process.
       const loginInfo = await nexusSSOLogin(this)

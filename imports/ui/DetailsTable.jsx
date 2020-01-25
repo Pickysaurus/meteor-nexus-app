@@ -90,7 +90,7 @@ class FileInfo extends Component {
             <p>Version: {activeFile ? activeFile.version : ''}</p>
             <p>Uploaded: {activeFile ? activeFile.uploaded_time.toLocaleString() : ''}</p>
             <p>Summary: <br/>{activeFile ? activeFile.description.replace(/(<br \/>)/g, '\n').replace(/(\[.+\]).+(\[\/.+\])/g, '') : ''}</p>
-            { activeFile ? <div><button className="btn" disabled={!nexusModsUser.is_premium} onClick={this.nxmLink}>Vortex</button><button className='btn' onClick={this.manualDownload.bind(this)}>Manual</button></div> : ''}
+            { activeFile && nexusModsUser ? <div><button className="btn" disabled={!nexusModsUser.is_premium} onClick={this.nxmLink}>Vortex</button><button className='btn' onClick={this.manualDownload.bind(this)}>Manual</button></div> : ''}
             </div>
         );
     }
