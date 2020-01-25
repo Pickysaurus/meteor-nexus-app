@@ -7,7 +7,6 @@ import { userAccounts } from '../api/userAccounts.js';
 
 import Info from './Info.jsx';
 import NexusModsAccount from './NexusModsAccount.jsx';
-import Selectors from './Selectors.jsx';
 import BodySignIn from './BodySignIn.jsx';
 import GameSelector from './GameSelector.jsx';
 import ModSelector from './ModSelector.jsx';
@@ -54,8 +53,15 @@ class App extends Component {
   }
 
   updateGame(newGame) {
-    console.log('Setting game:', newGame);
-    this.setState({activeGame: newGame});
+    this.setState({activeGame: newGame, activeMod: null, activeFile: null});
+  }
+  
+  updateMod(newMod) {
+    this.setState({activeMod: newMod, activeFile: null});
+  }
+
+  updateFile(newFile) {
+    this.setState({activeFile: newFile});
   }
 
   render() {
@@ -82,23 +88,16 @@ class App extends Component {
               nexusModsUser={nexusModsUser}
               activeGame={activeGame}
               activeMod={activeMod}
+              updateMod={this.updateMod.bind(this)}
             />
             <FileSelector 
               nexusModsUser={nexusModsUser}
               activeGame={activeGame}
               activeMod={activeMod}
               activeFile={activeFile}
+              updateFile={this.updateFile.bind(this)}
             />
           </div>}
-          <br/>
-          {this.state.ready ? <Selectors
-              ready={this.state.ready}
-              nexusModsUser={this.state.ready ? this.state.nexusModsUser : null}
-              activeGame={this.state.activeGame}
-              activeMod={this.state.activeMod}
-              activeFile={this.state.activeFile}
-              updateGame={this.updateGame.bind(this)}
-            /> : ''}
         </div>
       </div>
     );

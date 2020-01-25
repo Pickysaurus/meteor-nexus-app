@@ -125,15 +125,32 @@ h1 {
   background-repeat: no-repeat;
   background-size: 50% auto;
   background-color: rgb(193,193,193, 0.5);
-  background-blend-mode: lighten;
   height: 100px;
   font-size: 1em;
   display: inline-table;
   margin: 8px;
+  text-overflow: ellipsis;
 }
 .selector-overlay {
   height: 100%;
   padding: 0 16px;
   line-height: 2em;
   background-image: linear-gradient(to right, black 55%, transparent);
+}
+
+.search-item {
+  background-color: rgb(76,76,76);
+  color: #fff;
+  border-bottom: 1px solid #c1c1c1;
+  padding: 8px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+}
+
+.search-item:hover {
+  background-color: #181818;
+}
+
+.search-item img {
+  float: right;
 }
