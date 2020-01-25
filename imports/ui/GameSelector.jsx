@@ -56,9 +56,9 @@ class GameSelector extends Component {
         const {gameList} = this.state;
 
         return(
-            <div className="selector" style={{backgroundImage: activeGame ? `url(https://staticdelivery.nexusmods.com/Images/games/4_3/tile_${activeGame.id}.jpg)` : 'url(https://staticdelivery.nexusmods.com/Images/games/4_3/tile_empty.png)'}}>
-                <div className="selector-overlay"><b>🕹️ Game:</b><br/>
-                {activeGame ? activeGame.name : <GameSearch gameList={gameList} updateGame={this.props.updateGame.bind(this)}/>}
+            <div className="selector selector-game" style={{backgroundImage: activeGame ? `url(https://staticdelivery.nexusmods.com/Images/games/4_3/tile_${activeGame.id}.jpg)` : 'url(https://staticdelivery.nexusmods.com/Images/games/4_3/tile_empty.png)'}}>
+                <div className="selector-overlay"><b>🕹️ Game:</b> {activeGame ? activeGame.id : ''}<br/>
+                {activeGame ? activeGame.name : <GameSearch className="selector-dropdown" gameList={gameList} updateGame={this.props.updateGame.bind(this)}/>}
                     <br/>
                 {activeGame ? <button className="btn" onClick={() => updateGame(undefined)}>Change</button> : ''}</div>
             </div>

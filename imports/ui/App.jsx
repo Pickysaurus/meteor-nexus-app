@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { Form, FormGroup } from 'react-bootstrap';
 import { withTracker } from 'meteor/react-meteor-data';
 import { Meteor } from 'meteor/meteor';
 
@@ -11,16 +12,21 @@ import BodySignIn from './BodySignIn.jsx';
 import GameSelector from './GameSelector.jsx';
 import ModSelector from './ModSelector.jsx';
 import FileSelector from './FileSelector.jsx';
+import DetailsTable from './DetailsTable.jsx';
+import CompatibilityTable from './CompatibilityTable.jsx';
 
 class App extends Component {
   constructor(props) {
     super(props);
     const savedKey = sessionStorage.getItem("key");
     savedKey ? Meteor.call('validateAPIkey', (savedKey), (error, result) => {
-      if (error) console.error;
+      if (error) return console.error;
       this.setState({
         nexusModsUser: !error ? result : null,
-        ready: true,        
+        ready: true,
+        activeGame: sessionStorage.getItem('game') ? JSON.parse(sessionStorage.getItem('game')) : null,
+        activeMod: sessionStorage.getItem('mod') ? JSON.parse(sessionStorage.getItem('mod')) : null,
+        activeFile: sessionStorage.getItem('file') ? JSON.parse(sessionStorage.getItem('file')) : null,       
       });
     }) : null;
     // const api = savedUser ? Nexus.create(savedUser.key,'Mod Data', '1.0.0', '100').catch(console.error) : null;
@@ -31,6 +37,7 @@ class App extends Component {
       activeMod: null,
       activeFile: null,
       ready: false,
+      showFallback: false,
     }
   }
 
@@ -42,7 +49,12 @@ class App extends Component {
       sessionStorage.removeItem('key');      
     } else {
       // Start the login process.
-      const loginInfo = await nexusSSOLogin().catch(console.error);
+      const loginInfo = await nexusSSOLogin(this)
+        .catch((err) => {
+          console.log("SSO Error", err);
+          return this.setState({showFallback: true});
+        });
+      if (typeof loginInfo === Error) return this.setState({showFallback: true});
       if (!loginInfo) alert('Login to Nexus Mods failed.');
       await Meteor.call('validateAPIkey', (loginInfo.key), (error, result) => {
         if (error) alert(error);
@@ -52,23 +64,31 @@ class App extends Component {
     }
   }
 
+  updateKey(newKey) {
+    this.setState({nexusModsUser: newKey, ready: newKey ? true : false});
+  }
+
   updateGame(newGame) {
     this.setState({activeGame: newGame, activeMod: null, activeFile: null});
+    newGame ? sessionStorage.setItem("game", JSON.stringify(newGame)) : sessionStorage.removeItem('game');
   }
   
   updateMod(newMod) {
     this.setState({activeMod: newMod, activeFile: null});
+    newMod ? sessionStorage.setItem("mod", JSON.stringify(newMod)) : sessionStorage.removeItem('mod');
   }
 
   updateFile(newFile) {
     this.setState({activeFile: newFile});
+    newFile ? sessionStorage.setItem("file", JSON.stringify(newFile)) : sessionStorage.removeItem('file');
   }
 
   render() {
-    const { activeFile, activeGame, activeMod, ready, nexusModsUser} = this.state;
+    const { activeFile, activeGame, activeMod, showFallback, ready, nexusModsUser} = this.state;
 
     return (
       <div>
+        {showFallback ? <FallbackModal login={this.updateKey.bind(this)} /> : ''}
         <h1>Mod Compatibility Database</h1>
         <NexusModsAccount
           loginButton = {this.loginToNexusMods.bind(this)}
@@ -76,7 +96,7 @@ class App extends Component {
         />
         <div className="main-content">
           <Info />
-          {!this.state.ready ? <BodySignIn onClick={this.loginToNexusMods.bind(this)} />:
+          {!ready ? <BodySignIn onClick={this.loginToNexusMods.bind(this)} />:
           <div className="selector-container">
             <GameSelector
               nexusModsUser={nexusModsUser}
@@ -98,20 +118,107 @@ class App extends Component {
               updateFile={this.updateFile.bind(this)}
             />
           </div>}
+          <div className="file-info-container" style={{display: !activeFile ? 'none' : 'inherit'}}>
+            <h2>Compatibility Data</h2> 
+            {nexusModsUser && ready ?
+            <CompatibilityTable 
+              nexusModsUser={nexusModsUser}
+              activeGame={activeGame}
+              activeMod={activeMod}
+              activeFile={activeFile}
+            />
+            : ''}
+          </div>
+          <div className="file-info-container">
+            <DetailsTable activeMod={activeMod} activeFile={activeFile} nexusModsUser={nexusModsUser} /> 
+          </div>
         </div>
       </div>
     );
   }
 }
 
+class Modal extends Component {
+  constructor(props) {
+    super(props);
+  }
 
-function nexusSSOLogin() {
+  render() {
+    return (
+      <div className={this.props.show ? "modal display-block" : "modal display-none"}>
+        <section className="modal-main">
+          {this.props.children}
+          <button onClick={this.props.handleClose} className="btn">close</button>
+        </section>
+      </div>
+    );
+  }
+}
+
+
+class FallbackModal extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { show: true, errorMessage: null };
+    this.fallbackKeyInput = React.createRef();
+  }
+
+  showModal = () => {
+    this.setState({show: true});
+  }
+
+  hideModal = () => {
+    this.setState({show: false});
+  }
+  
+  handleSubmit() {
+    this.setState({ errorMessage: null });
+    const submittedkey = this.fallbackKeyInput.current.value;
+    this.validate(submittedkey, this.hideModal);
+  }
+
+  async validate(apiKey, callback) {
+    if (!apiKey || !apiKey.length) return this.setState({ errorMessage: "API key cannot be blank." });
+
+    return await Meteor.call('validateAPIkey', (apiKey), (error, result) => {
+      if(error){
+        console.error(error);
+        return this.setState({ errorMessage: error.error });
+      } 
+      sessionStorage.setItem("key",result.key);
+      this.props.login(result);
+      callback();
+    });
+  }
+
+  render() {
+    return (
+      <main>
+        <Modal show={this.state.show} handleClose={this.hideModal.bind(this)}>
+          <h1>Fallback login</h1>
+          <p>The Nexus Mods SSO is currently unavailable. Please enter your API key manually to login in.</p>
+          <FormGroup onSubmit={this.handleSubmit}>
+            <input className = {this.state.errorMessage ? 'input-error' : ''} type="text" ref={this.fallbackKeyInput} placeholder="Paste your API key here..." />
+            <button type="submit" className="btn" onClick={this.handleSubmit.bind(this)}>Save</button>
+          </FormGroup>
+          {this.state.errorMessage ? <p className="error">{this.state.errorMessage}</p> : ''}
+        </Modal>
+      </main>
+    );
+  }
+}
+
+function nexusSSOLogin(parent) {
   return new Promise((resolve, reject) => {
-    //resolve({name: "Pickysaurus", avatarURL: "https://forums.nexusmods.com/uploads/profile/photo-thumb-31179975.png"});
+
     const application_slug = "vortex";
 
     // Open the web socket.
     window.socket = new WebSocket('wss://sso.nexusmods.com');
+
+    socket.onerror = function (error) {
+      return parent.setState({showFallback: true});
+    }
 
     socket.onopen = function (event) {
       // console.log('SSO Connection open!');
@@ -164,7 +271,7 @@ function nexusSSOLogin() {
           sessionStorage.removeItem("uuid");
           sessionStorage.removeItem("connection_token");
           socket.close();
-          resolve({name: "Pickysaurus", profile_url: "https://forums.nexusmods.com/uploads/profile/photo-thumb-31179975.png", key: apiKey});
+          resolve({key: apiKey});
         }
       }
     }

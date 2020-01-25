@@ -1,23 +1,46 @@
 import React, { Component } from "react";
-import ReactDOM from 'react-dom';
 import { Meteor } from 'meteor/meteor';
-import Select from "react-dropdown-select";
+import AsyncSelect from 'react-select/async';
 
 class ModSelector extends Component {
     constructor(props) {
         super(props);
         this.state = {
             results: [],
+            disableSearch: false,
         }
+    }
+
+    handleInputChange(newValue) {
+        //console.log(newValue);
+    }
+
+    handleChange(selected) {
+        const { nexusModsUser, updateMod } = this.props;
+        this.setState({disableSearch: true}, (() => {
+            Meteor.call('getModInfo', nexusModsUser.key, selected.value.game_name, selected.value.mod_id, (error, result) => {
+                if (error) return this.setState({disableSearch: false});
+                updateMod(result);
+            });
+        }))
     }
     
     render() {
         const {activeMod, activeGame, updateMod} = this.props;
 
         return(
-            <div className="selector" style={{backgroundImage: activeMod ? `url(https://staticdelivery.nexusmods.com/${activeMod.image})` : ''}}>
-                <div className="selector-overlay"><b>⚙️ Mod:</b><br/>
-                {activeMod ? activeMod.name : activeGame ? <Select labelField="name" valueField="name" options={options} onChange={(values) => updateMod(values[0])} /> : <i>Select a game</i> } <br/>
+            <div className="selector" style={{backgroundImage: activeMod ? `url(${activeMod.picture_url})` : ''}}>
+                <div className="selector-overlay"><b>⚙️ Mod:</b> {activeMod ? activeMod.mod_id : ''}<br/>
+                {activeMod ? <span className="selector-title">{activeMod.name}</span> : activeGame 
+                ? 
+                <AsyncSelect 
+                    className="selector-dropdown"
+                    disabled={this.state.disableSearch}
+                    loadOptions={searchMods.bind(null, activeGame.id)}
+                    onInputChange={this.handleInputChange}
+                    onChange={this.handleChange.bind(this)}
+                />
+                : <i>Select a game</i> } <br/>
                 {activeMod ? <button className="btn" onClick={() => updateMod()}>Change</button> : ''}</div>
             </div>
         );
@@ -26,15 +49,16 @@ class ModSelector extends Component {
     
 }
 
-const options = [{name: "Skyrim Script Extender for VR (SKSEVR)",
-downloads: 0,
-endorsements: 0,
-url: "/skyrimspecialedition/mods/30457",
-image: "/mods/1151/images/thumbnails/37135/37135-1548707284-251990173.png",
-username: "Pickysaurus",
-user_id: 31179975,
-game_name: "skyrimspecialedition",
-game_id: 1704,
-mod_id: 30457}]
+const searchMods = (activeGameId, input, callback) => {
+    if (input.length < 3) return callback([]);
+
+    Meteor.call('searchMods', activeGameId, input, function (error, result) {
+        if (error) return callback([]);
+        const preppedResults = result.results.map((mod) => {return { label: mod.name, value: mod }});
+        return callback(preppedResults);
+    });
+    
+
+}
 
 export default ModSelector;
