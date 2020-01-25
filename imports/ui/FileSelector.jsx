@@ -16,7 +16,7 @@ class FileSelector extends Component {
         const {activeFile, activeMod, updateFile} = this.props;
 
         return(
-            <div className="selector" style={{backgroundImage: activeFile ? `url(${activeFile.id})` : ''}}>
+            <div className="selector" style={{backgroundImage: activeFile ? `url(https://staticdelivery.nexusmods.com/${activeMod.image})` : ''}}>
                 <div className="selector-overlay"><b>📂 File:</b><br/>
                 {activeFile ? activeFile.name : activeMod ? <Select labelField="name" valueField="file_id" options={options} onChange={(values) => updateFile(values[0])} /> : <i>Select a mod</i>} <br/>
                 {activeFile ? <button className="btn" onClick={() => updateFile()}>Change</button> : ''}</div>
