@@ -149,6 +149,7 @@ h1 {
   color: #000;
   border-color: #da8e35;
   background-color: rgb(255,255,255, 0.75);
+  /* overflow: visible; */
 }
 
 ::placeholder {
@@ -188,7 +189,7 @@ h1 {
   padding: 8px;
 }
 
-.selector {
+.selector, .selector-test {
   text-align: left;
   border-left: 5px solid #da8e35;
   width: 30%;
@@ -202,8 +203,10 @@ h1 {
   font-size: 1em;
   display: inline-table;
   margin: 8px;
-  text-overflow: ellipsis;
+  /* text-overflow: ellipsis; */
 }
+
+
 
 .selector-game {
   background-position: right;
@@ -218,6 +221,9 @@ h1 {
   background-image: linear-gradient(to right, black 55%, transparent);
   text-overflow: ellipsis;
   max-height: 100px;
+  /* max-width: 228px;
+  white-space: nowrap;
+  overflow: hidden; */
 }
 
 .selector-close {

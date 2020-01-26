@@ -12,6 +12,7 @@ class FileSelector extends Component {
 
     prepareFiles(modFiles) {
         return modFiles.map((file) => {
+            if (file.title) return file; //We've already done this once. 
             file.title = [...file.name].join('');
             const displayTitle = `${file.name} (${file.version})`
             file.name = displayTitle;

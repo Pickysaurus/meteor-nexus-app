@@ -121,17 +121,9 @@ class App extends Component {
               updateFile={this.updateFile.bind(this)}
             />
           </div>}
-          <div className="file-info-container" style={{display: !activeFile ? 'none' : 'inherit'}}>
-            <h2>Compatibility Data</h2> 
-            {nexusModsUser && ready ?
-            <CompatibilityTable 
-              nexusModsUser={nexusModsUser}
-              activeGame={activeGame}
-              activeMod={activeMod}
-              activeFile={activeFile}
-            />
-            : ''}
-          </div>
+          {nexusModsUser && ready && activeFile
+          ? <CompatibilityTable nexusModsUser={nexusModsUser} activeGame={activeGame} activeMod={activeMod} activeFile={activeFile} />
+          : ''}
           <div className="file-info-container">
             <DetailsTable activeMod={activeMod} activeFile={activeFile} nexusModsUser={nexusModsUser} /> 
           </div>

@@ -6,14 +6,16 @@ import { Meteor } from 'meteor/meteor';
 class CompatibilityTable extends Component {
     render() {
         return (
+            <div className="file-info-container">
+                <h2>Compatibility Data{this.props.activeFile ? ` for ${this.props.activeFile.name}` : ''}</h2>
             <Table striped hover>
                 <thead>
                     <tr>
                         <th>
-                            Mod File
+                            Type
                         </th>
                         <th>
-                            Interaction
+                            Mod File
                         </th>
                         <th>
                             Comment
@@ -34,6 +36,7 @@ class CompatibilityTable extends Component {
                     <AddRuleRow nexusModsUser={this.props.nexusModsUser} />
                 </tbody>
             </Table>
+            </div>
         );
     }
 }
@@ -43,9 +46,6 @@ class AddRuleRow extends Component {
         return(
             <tr>
                 <td>
-                    <AsyncSelect />
-                </td>
-                <td>
                     <select>
                         <option>Requires</option>
                         <option>Recommended</option>
@@ -53,6 +53,9 @@ class AddRuleRow extends Component {
                         <option>Requires Patch</option>
                         <option>Includes</option>
                     </select>
+                </td>
+                <td>
+                    <AsyncSelect />
                 </td>
                 <td>
                     <input type="text" placeholder="Comment" onChange={() => null} />
